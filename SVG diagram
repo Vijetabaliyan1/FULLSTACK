@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SVG Circle Tool</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f2f2f2;
+    }
+
+    .wrapper {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toolbar {
+        width: 70vw;
+        margin-bottom: 10px;
+    }
+
+    .undo-btn {
+        background: #2f7df6;
+        color: white;
+        border: none;
+        padding: 10px 22px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    svg {
+        width: 70vw;
+        height: 60vh;
+        background: white;
+        border-radius: 10px;
+    }
+
+    .count {
+        margin-top: 15px;
+        font-size: 22px;
+        font-weight: bold;
+    }
+</style>
+</head>
+
+<body>
+<div class="wrapper">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button id="undoBtn" class="undo-btn">Undo</button>
+    </div>
+
+    <!-- SVG Canvas -->
+    <svg id="svgCanvas">
+        <rect id="box"
+              x="5%"
+              y="5%"
+              width="90%"
+              height="90%"
+              fill="none"
+              stroke="#cfcfcf"
+              stroke-width="2"
+              stroke-dasharray="8 6"/>
+    </svg>
+
+    <!-- Counter -->
+    <div class="count">
+        Circles drawn: <span id="counter">0</span>
+    </div>
+
+</div>
+
+<script>
+    const svgCanvas = document.getElementById("svgCanvas");
+    const drawBox = document.getElementById("box");
+    const counter = document.getElementById("counter");
+    const undoBtn = document.getElementById("undoBtn");
+
+    const circles = [];
+
+    // Convert mouse → SVG coordinates (more accurate)
+    function getSVGPoint(evt) {
+        const pt = svgCanvas.createSVGPoint();
+        pt.x = evt.clientX;
+        pt.y = evt.clientY;
+        return pt.matrixTransform(svgCanvas.getScreenCTM().inverse());
+    }
+
+    // Draw circle on click
+    function drawCircle(evt) {
+        const point = getSVGPoint(evt);
+        const bounds = drawBox.getBBox();
+
+        // allow drawing only inside box
+        if (
+            point.x < bounds.x ||
+            point.x > bounds.x + bounds.width ||
+            point.y < bounds.y ||
+            point.y > bounds.y + bounds.height
+        ) return;
+
+        const circle = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+
+        circle.setAttribute("cx", point.x);
+        circle.setAttribute("cy", point.y);
+        circle.setAttribute("r", 10);
+        circle.setAttribute("fill", "#2f7df6");
+
+        svgCanvas.appendChild(circle);
+        circles.push(circle);
+
+        updateCounter();
+    }
+
+    // Undo last circle
+    function undoCircle() {
+        if (!circles.length) return;
+
+        const lastCircle = circles.pop();
+        lastCircle.remove();
+
+        updateCounter();
+    }
+
+    // Update counter
+    function updateCounter() {
+        counter.textContent = circles.length;
+    }
+
+    // Event listeners (best practice instead of onclick)
+    svgCanvas.addEventListener("click", drawCircle);
+    undoBtn.addEventListener("click", undoCircle);
+</script>
+
+</body>
+</html>
